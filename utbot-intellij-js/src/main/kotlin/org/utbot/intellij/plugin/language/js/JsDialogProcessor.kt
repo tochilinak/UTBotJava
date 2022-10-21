@@ -96,7 +96,7 @@ object JsDialogProcessor {
             pathToNYC = model.pathToNYC,
             pathToNPM = model.pathToNPM,
             timeout = model.timeout,
-            coverageMode = CoverageMode.BASIC
+            coverageMode = model.coverageMode
         )
         (object : Task.Backgroundable(model.project, "Generate tests") {
             override fun run(indicator: ProgressIndicator) {

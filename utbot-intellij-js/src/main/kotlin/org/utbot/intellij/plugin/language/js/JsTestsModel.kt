@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.utbot.framework.codegen.TestFramework
 import org.utbot.intellij.plugin.models.BaseTestsModel
+import service.CoverageMode
 import settings.JsTestGenerationSettings.defaultTimeout
 
 
@@ -29,4 +30,5 @@ class JsTestsModel(
     var pathToNode: String = "node"
     var pathToNYC: String = "nyc"
     var pathToNPM: String = "npm"
+    var coverageMode: CoverageMode = CoverageMode.FAST
 }
