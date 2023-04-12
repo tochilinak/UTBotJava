@@ -2,6 +2,8 @@ package org.utbot.python
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import mu.KLogger
+import mu.KotlinLogging
 import org.parsers.python.PythonParser
 import org.utbot.framework.codegen.domain.RuntimeExceptionTestsBehaviour
 import org.utbot.python.framework.codegen.model.PythonSysPathImport
@@ -21,218 +23,277 @@ import org.utbot.python.framework.api.python.PythonModel
 import org.utbot.python.framework.api.python.RawPythonAnnotation
 import org.utbot.python.framework.api.python.util.pythonAnyClassId
 import org.utbot.python.framework.codegen.model.PythonCodeGenerator
+import org.utbot.python.framework.codegen.model.PythonImport
 import org.utbot.python.newtyping.PythonFunctionDefinition
 import org.utbot.python.newtyping.general.CompositeType
 import org.utbot.python.newtyping.getPythonAttributes
 import org.utbot.python.newtyping.mypy.MypyAnnotationStorage
+import org.utbot.python.newtyping.mypy.MypyException
 import org.utbot.python.newtyping.mypy.readMypyAnnotationStorageAndInitialErrors
 import org.utbot.python.newtyping.mypy.setConfigFile
-import org.utbot.python.typing.MypyAnnotations
+import org.utbot.python.utils.mypy.MypyAnnotations
 import org.utbot.python.utils.Cleaner
 import org.utbot.python.utils.RequirementsUtils.requirementsAreInstalled
 import org.utbot.python.utils.getLineOfFunction
+import org.utbot.python.utils.mypy.MypyConfig
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 
-object PythonTestGenerationProcessor {
-    fun processTestGeneration(
-        pythonPath: String,
-        pythonFilePath: String,
-        pythonFileContent: String,
-        directoriesForSysPath: Set<String>,
-        currentPythonModule: String,
-        pythonMethods: List<PythonMethodHeader>,
-        containingClassName: String?,
-        timeout: Long,
-        testFramework: TestFramework,
-        timeoutForRun: Long,
-        writeTestTextToFile: (String) -> Unit,
-        pythonRunRoot: Path,
-        doNotCheckRequirements: Boolean = false,
-        withMinimization: Boolean = true,
-        runtimeExceptionTestsBehaviour: RuntimeExceptionTestsBehaviour = RuntimeExceptionTestsBehaviour.FAIL,
-        isCanceled: () -> Boolean = { false },
-        checkingRequirementsAction: () -> Unit = {},
-        installingRequirementsAction: () -> Unit = {},
-        requirementsAreNotInstalledAction: () -> MissingRequirementsActionResult = {
-            MissingRequirementsActionResult.NOT_INSTALLED
-        },
-        startedLoadingPythonTypesAction: () -> Unit = {},
-        startedTestGenerationAction: () -> Unit = {},
-        notGeneratedTestsAction: (List<String>) -> Unit = {}, // take names of functions without tests
-        processMypyWarnings: (List<String>) -> Unit = {},
-        processCoverageInfo: (String) -> Unit = {},
-        startedCleaningAction: () -> Unit = {},
-        finishedAction: (List<String>) -> Unit = {},  // take names of functions with generated tests
-    ) {
+class PythonTestGenerationProcessor(
+    val pythonPath: String,
+    val pythonFilePath: String,
+    val pythonFileContent: String,
+    val directoriesForSysPath: Set<String>,
+    val currentPythonModule: String,
+    val pythonMethods: List<PythonMethodHeader>,
+    val containingClassName: String?,
+    val timeout: Long,
+    val testFramework: TestFramework,
+    val timeoutForRun: Long,
+    val writeTestTextToFile: (String) -> Unit,
+    val pythonRunRoot: Path,
+    val doNotCheckRequirements: Boolean = false,
+    val withMinimization: Boolean = true,
+    val runtimeExceptionTestsBehaviour: RuntimeExceptionTestsBehaviour = RuntimeExceptionTestsBehaviour.FAIL,
+    val isCanceled: () -> Boolean = { false },
+    val checkingRequirementsAction: () -> Unit = {},
+    val installingRequirementsAction: () -> Unit = {},
+    val requirementsAreNotInstalledAction: () -> MissingRequirementsActionResult = {
+        MissingRequirementsActionResult.NOT_INSTALLED
+    },
+    val startedLoadingPythonTypesAction: () -> Unit = {},
+    val startedTestGenerationAction: () -> Unit = {},
+    val notGeneratedTestsAction: (List<String>) -> Unit = {}, // take names of functions without tests
+    val processMypyWarnings: (List<String>) -> Unit = {},
+    val processCoverageInfo: (String) -> Unit = {},
+    val startedCleaningAction: () -> Unit = {},
+    val finishedAction: (List<String>) -> Unit = {},  // take names of functions with generated tests
+) {
+    private val logger: KLogger = KotlinLogging.logger {}
+
+    /*
+    Returns `true` if requirements are installed
+     */
+    private fun checkRequirements(): Boolean {
+        if (!doNotCheckRequirements) {
+            checkingRequirementsAction()
+            if (!requirementsAreInstalled(pythonPath)) {
+                installingRequirementsAction()
+                val result = requirementsAreNotInstalledAction()
+                if (result == MissingRequirementsActionResult.NOT_INSTALLED)
+                    return false
+            }
+        }
+        return true
+    }
+
+    private fun configurateMypy(): MypyConfig {
+        val mypyConfigFile = setConfigFile(directoriesForSysPath)
+        val (mypyStorage, report) = readMypyAnnotationStorageAndInitialErrors(
+            pythonPath,
+            pythonFilePath,
+            currentPythonModule,
+            mypyConfigFile
+        )
+        return MypyConfig(mypyStorage, report, mypyConfigFile)
+    }
+
+    private fun constructTestClassId(): PythonClassId {
+        return if (containingClassName == null) {
+            PythonClassId(currentPythonModule, "TopLevelFunctions")
+        } else {
+            PythonClassId(currentPythonModule, containingClassName)
+        }
+    }
+
+    private fun constructMethodIds(classId: PythonClassId, notEmptyTests: List<PythonTestSet>): Map<PythonMethod, PythonMethodId> {
+        return notEmptyTests.associate {
+            it.method to PythonMethodId(
+                classId,
+                it.method.name,
+                RawPythonAnnotation(pythonAnyClassId.name),
+                it.method.arguments.map { argument ->
+                    argument.annotation?.let { annotation ->
+                        RawPythonAnnotation(annotation)
+                    } ?: pythonAnyClassId
+                }
+            )
+        }
+    }
+
+    fun processTestGeneration() {
+        val tests = collectTestCases()
+        renderTests(tests)
+    }
+
+    fun renderTests(tests: List<PythonTestSet>) {
+        val (notEmptyTests, emptyTestSets) = tests.partition { it.executions.isNotEmpty() }
+        if (emptyTestSets.isNotEmpty()) {
+            notGeneratedTestsAction(emptyTestSets.map { it.method.name })
+        }
+
+        if (notEmptyTests.isEmpty())
+            return
+
+        val classId = constructTestClassId()
+        val methodIds = constructMethodIds(classId, notEmptyTests)
+
+        val allImports = collectImports(
+            notEmptyTests, methodIds
+        )
+
+        val testCode = generateTestCode(classId, notEmptyTests, methodIds, allImports)
+        writeTestTextToFile(testCode)
+
+        val coverageInfo = getCoverageInfo(notEmptyTests)
+        processCoverageInfo(coverageInfo)
+
+        val mypyReport = getMypyReport(notEmptyTests, pythonFileContent)
+        if (mypyReport.isNotEmpty())
+            processMypyWarnings(mypyReport)
+
+        finishedAction(notEmptyTests.map { it.method.name })
+    }
+
+    fun collectTestCases(): List<PythonTestSet> {
         Cleaner.restart()
 
+        val tests = mutableListOf<PythonTestSet>()
         try {
-            if (!doNotCheckRequirements) {
-                checkingRequirementsAction()
-                if (!requirementsAreInstalled(pythonPath)) {
-                    installingRequirementsAction()
-                    val result = requirementsAreNotInstalledAction()
-                    if (result == MissingRequirementsActionResult.NOT_INSTALLED)
-                        return
-                }
+            if (checkRequirements()) {
+                startedLoadingPythonTypesAction()
+                val mypyConfig = configurateMypy()
+
+                startedTestGenerationAction()
+                tests.addAll(generateTestCase(mypyConfig))
             }
+        } catch (ex: MypyException) {
+            logger.error { ex.message }
+        } catch (ex: Exception) {
+            logger.error { ex }
+        } finally {
+            startedCleaningAction()
+            Cleaner.doCleaning()
+        }
+        return tests
+    }
 
-            startedLoadingPythonTypesAction()
+    private fun generateTestCase(mypyConfig: MypyConfig): List<PythonTestSet> {
+        val startTime = System.currentTimeMillis()
 
-            val mypyConfigFile = setConfigFile(directoriesForSysPath)
-            val (mypyStorage, report) = readMypyAnnotationStorageAndInitialErrors(
-                pythonPath,
-                pythonFilePath,
-                currentPythonModule,
-                mypyConfigFile
-            )
+        val testCaseGenerator = PythonTestCaseGenerator(
+            withMinimization = withMinimization,
+            directoriesForSysPath = directoriesForSysPath,
+            curModule = currentPythonModule,
+            pythonPath = pythonPath,
+            fileOfMethod = pythonFilePath,
+            isCancelled = isCanceled,
+            timeoutForRun = timeoutForRun,
+            sourceFileContent = pythonFileContent,
+            mypyStorage = mypyConfig.mypyStorage,
+            mypyReportLine = mypyConfig.mypyReportLine,
+            mypyConfigFile = mypyConfig.mypyConfigFile,
+        )
 
-            startedTestGenerationAction()
+        val until = startTime + timeout
+        return pythonMethods.mapIndexed { index, methodHeader ->
+            val methodsLeft = pythonMethods.size - index
+            val now = System.currentTimeMillis()
+            val localUntil = now + (until - now) / methodsLeft
+            val method = findMethodByHeader(mypyConfig.mypyStorage, methodHeader, currentPythonModule, pythonFileContent)
+            testCaseGenerator.generate(method, localUntil)
+        }
+    }
 
-            val startTime = System.currentTimeMillis()
+    private fun collectImports(
+        notEmptyTests: List<PythonTestSet>,
+        methodIds: Map<PythonMethod, PythonMethodId>,
+    ): Set<PythonImport> {
 
-            val testCaseGenerator = PythonTestCaseGenerator(
-                withMinimization = withMinimization,
-                directoriesForSysPath = directoriesForSysPath,
-                curModule = currentPythonModule,
-                pythonPath = pythonPath,
-                fileOfMethod = pythonFilePath,
-                isCancelled = isCanceled,
-                timeoutForRun = timeoutForRun,
-                sourceFileContent = pythonFileContent,
-                mypyStorage = mypyStorage,
-                mypyReportLine = report,
-                mypyConfigFile = mypyConfigFile,
-            )
-
-            val until = startTime + timeout
-            val tests = pythonMethods.mapIndexed { index, methodHeader ->
-                val methodsLeft = pythonMethods.size - index
-                val localUntil = (until - System.currentTimeMillis()) / methodsLeft + System.currentTimeMillis()
-                val method = findMethodByHeader(mypyStorage, methodHeader, currentPythonModule, pythonFileContent)
-                testCaseGenerator.generate(method, localUntil)
-            }
-
-            val (notEmptyTests, emptyTestSets) = tests.partition { it.executions.isNotEmpty() }
-
-            if (emptyTestSets.isNotEmpty()) {
-                notGeneratedTestsAction(emptyTestSets.map { it.method.name })
-            }
-
-            if (notEmptyTests.isEmpty())
-                return
-
-            val classId =
-                if (containingClassName == null)
-                    PythonClassId(currentPythonModule, "TopLevelFunctions")
-                else
-                    PythonClassId(currentPythonModule, containingClassName)
-
-            val methodIds = notEmptyTests.associate {
-                it.method to PythonMethodId(
-                    classId,
-                    it.method.name,
-                    RawPythonAnnotation(pythonAnyClassId.name),
-                    it.method.arguments.map { argument ->
-                        argument.annotation?.let { annotation ->
-                            RawPythonAnnotation(annotation)
-                        } ?: pythonAnyClassId
-                    }
-                )
-            }
-
-            val paramNames = notEmptyTests.associate { testSet ->
-                var params = testSet.method.arguments.map { it.name }
-                if (testSet.method.hasThisArgument) {
-                    params = params.drop(1)
-                }
-                methodIds[testSet.method] as ExecutableId to params
-            }.toMutableMap()
-
-            val importParamModules = notEmptyTests.flatMap { testSet ->
-                testSet.executions.flatMap { execution ->
-                    (execution.stateBefore.parameters + execution.stateAfter.parameters +
-                            listOf(execution.stateBefore.thisInstance, execution.stateAfter.thisInstance))
-                        .filterNotNull()
-                        .flatMap { utModel ->
+        val importParamModules = notEmptyTests.flatMap { testSet ->
+            testSet.executions.flatMap { execution ->
+                (execution.stateBefore.parameters + execution.stateAfter.parameters +
+                        listOf(execution.stateBefore.thisInstance, execution.stateAfter.thisInstance))
+                    .filterNotNull()
+                    .flatMap { utModel ->
                         (utModel as PythonModel).let {
                             it.allContainingClassIds.map { classId ->
                                 PythonUserImport(importName_ = classId.moduleName)
                             }
                         }
                     }
-                }
             }
-            val importResultModules = notEmptyTests.flatMap { testSet ->
-                testSet.executions.mapNotNull { execution ->
-                    if (execution.result is UtExecutionSuccess) {
-                        (execution.result as UtExecutionSuccess).let { result ->
-                            (result.model as PythonModel).let {
-                                it.allContainingClassIds.map { classId ->
-                                    PythonUserImport(importName_ = classId.moduleName)
-                                }
+        }
+        val importResultModules = notEmptyTests.flatMap { testSet ->
+            testSet.executions.mapNotNull { execution ->
+                if (execution.result is UtExecutionSuccess) {
+                    (execution.result as UtExecutionSuccess).let { result ->
+                        (result.model as PythonModel).let {
+                            it.allContainingClassIds.map { classId ->
+                                PythonUserImport(importName_ = classId.moduleName)
                             }
                         }
-                    } else null
-                }.flatten()
-            }
-            val testRootModules = notEmptyTests.mapNotNull { testSet ->
-                methodIds[testSet.method]?.rootModuleName?.let { PythonUserImport(importName_ = it) }
-            }
-            val sysImport = PythonSystemImport("sys")
-            val sysPathImports = relativizePaths(pythonRunRoot, directoriesForSysPath).map { PythonSysPathImport(it) }
+                    }
+                } else null
+            }.flatten()
+        }
+        val testRootModules = notEmptyTests.mapNotNull { testSet ->
+            methodIds[testSet.method]?.rootModuleName?.let { PythonUserImport(importName_ = it) }
+        }
+        val sysImport = PythonSystemImport("sys")
+        val sysPathImports = relativizePaths(pythonRunRoot, directoriesForSysPath).map { PythonSysPathImport(it) }
 
-            val testFrameworkModule =
-                testFramework.testSuperClass?.let { PythonUserImport(importName_ = (it as PythonClassId).rootModuleName) }
+        val testFrameworkModule =
+            testFramework.testSuperClass?.let { PythonUserImport(importName_ = (it as PythonClassId).rootModuleName) }
 
-            val allImports = (
-                    importParamModules + importResultModules + testRootModules + sysPathImports + listOf(
-                        testFrameworkModule,
-                        sysImport
-                    )
+        return (
+                importParamModules + importResultModules + testRootModules + sysPathImports + listOf(
+                    testFrameworkModule,
+                    sysImport
                 )
-                .filterNotNull()
+                )
+            .filterNotNull()
 //                .filterNot { it.importName == pythonBuiltinsModuleName }
-                .toSet()
+            .toSet()
+    }
 
-            val context = UtContext(this::class.java.classLoader)
-            withUtContext(context) {
-                val codegen = PythonCodeGenerator(
-                    classId,
-                    paramNames = paramNames,
-                    testFramework = testFramework,
-                    testClassPackageName = "",
-                    runtimeExceptionTestsBehaviour = runtimeExceptionTestsBehaviour,
-                )
-                val testCode = codegen.pythonGenerateAsStringWithTestReport(
-                    notEmptyTests.map { testSet ->
-                        val intRange = testSet.executions.indices
-                        val clusterInfo = listOf(Pair(UtClusterInfo("FUZZER"), intRange))
-                        CgMethodTestSet(
-                            executableId = methodIds[testSet.method] as ExecutableId,
-                            executions = testSet.executions,
-                            clustersInfo = clusterInfo,
-                        )
-                    },
-                    allImports
-                ).generatedCode
-                writeTestTextToFile(testCode)
+    fun generateTestCode(
+        classId: PythonClassId,
+        notEmptyTests: List<PythonTestSet>,
+        methodIds: Map<PythonMethod, PythonMethodId>,
+        allImports: Set<PythonImport>,
+    ): String {
+        val paramNames = notEmptyTests.associate { testSet ->
+            var params = testSet.method.arguments.map { it.name }
+            if (testSet.method.hasThisArgument) {
+                params = params.drop(1)
             }
+            methodIds[testSet.method] as ExecutableId to params
+        }.toMutableMap()
 
-            val coverageInfo = getCoverageInfo(notEmptyTests)
-            processCoverageInfo(coverageInfo)
-
-            val mypyReport = getMypyReport(notEmptyTests, pythonFileContent)
-            if (mypyReport.isNotEmpty())
-                processMypyWarnings(mypyReport)
-
-            finishedAction(notEmptyTests.map { it.method.name })
-
-        } finally {
-            startedCleaningAction()
-            Cleaner.doCleaning()
+        val context = UtContext(this::class.java.classLoader)
+        withUtContext(context) {
+            val codegen = PythonCodeGenerator(
+                classId,
+                paramNames = paramNames,
+                testFramework = testFramework,
+                testClassPackageName = "",
+                runtimeExceptionTestsBehaviour = runtimeExceptionTestsBehaviour,
+            )
+            val testCode = codegen.pythonGenerateAsStringWithTestReport(
+                notEmptyTests.map { testSet ->
+                    val intRange = testSet.executions.indices
+                    val clusterInfo = listOf(Pair(UtClusterInfo("FUZZER"), intRange))
+                    CgMethodTestSet(
+                        executableId = methodIds[testSet.method] as ExecutableId,
+                        executions = testSet.executions,
+                        clustersInfo = clusterInfo,
+                    )
+                },
+                allImports
+            ).generatedCode
+            return testCode
         }
     }
 

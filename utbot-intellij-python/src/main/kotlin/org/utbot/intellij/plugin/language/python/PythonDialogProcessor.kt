@@ -34,7 +34,6 @@ import org.utbot.intellij.plugin.ui.utils.showErrorDialogLater
 import org.utbot.intellij.plugin.ui.utils.testModules
 import org.utbot.python.PythonMethodHeader
 import org.utbot.python.PythonTestGenerationProcessor
-import org.utbot.python.PythonTestGenerationProcessor.processTestGeneration
 import org.utbot.python.framework.api.python.PythonClassId
 import org.utbot.python.framework.codegen.PythonCgLanguageAssistant
 import org.utbot.python.utils.RequirementsUtils.installRequirements
@@ -170,7 +169,7 @@ object PythonDialogProcessor {
                         requirementsList += model.testFramework.mainPackage
                     }
 
-                    processTestGeneration(
+                    val processor = PythonTestGenerationProcessor(
                         pythonPath = model.pythonPath,
                         pythonFilePath = model.file.virtualFile.path,
                         pythonFileContent = getContentFromPyFile(model.file),
@@ -208,6 +207,7 @@ object PythonDialogProcessor {
                         runtimeExceptionTestsBehaviour = model.runtimeExceptionTestsBehaviour,
                         startedCleaningAction = { indicator.text = "Cleaning up..." }
                     )
+                    processor.processTestGeneration()
                 } finally {
                     LockFile.unlock()
                 }

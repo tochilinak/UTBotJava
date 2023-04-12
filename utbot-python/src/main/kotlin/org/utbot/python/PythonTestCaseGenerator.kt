@@ -22,7 +22,7 @@ import org.utbot.python.newtyping.mypy.MypyAnnotationStorage
 import org.utbot.python.newtyping.mypy.MypyReportLine
 import org.utbot.python.newtyping.mypy.getErrorNumber
 import org.utbot.python.newtyping.utils.getOffsetLine
-import org.utbot.python.typing.MypyAnnotations
+import org.utbot.python.utils.mypy.MypyAnnotations
 import org.utbot.python.utils.ExecutionWithTimeoutMode
 import org.utbot.python.utils.TestGenerationLimitManager
 import org.utbot.python.utils.PriorityCartesianProduct

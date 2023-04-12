@@ -6,3 +6,7 @@ fun String.modifyWindowsPath(): String {
         "\\\\localhost\\$disk$${path.replace("/", "\\")}"
     } else this
 }
+
+class MypyException(
+    msg: String
+): Exception(msg)

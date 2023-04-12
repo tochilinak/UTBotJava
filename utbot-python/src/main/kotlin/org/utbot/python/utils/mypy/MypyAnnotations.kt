@@ -1,4 +1,4 @@
-package org.utbot.python.typing
+package org.utbot.python.utils.mypy
 
 object MypyAnnotations {
     const val TEMPORARY_MYPY_FILE = "<TEMPORARY MYPY FILE>"

@@ -10,7 +10,6 @@ import org.parsers.python.PythonParser
 import org.utbot.framework.codegen.domain.TestFramework
 import org.utbot.python.PythonMethodHeader
 import org.utbot.python.PythonTestGenerationProcessor
-import org.utbot.python.PythonTestGenerationProcessor.processTestGeneration
 import org.utbot.python.code.PythonCode
 import org.utbot.python.framework.api.python.PythonClassId
 import org.utbot.python.framework.codegen.model.Pytest
@@ -229,7 +228,7 @@ class PythonGenerateTestsCommand : CliktCommand(
             return
         }
 
-        processTestGeneration(
+        val processor = PythonTestGenerationProcessor(
             pythonPath = pythonPath,
             pythonFilePath = sourceFile.toAbsolutePath(),
             pythonFileContent = sourceFileContent,
@@ -266,11 +265,13 @@ class PythonGenerateTestsCommand : CliktCommand(
             },
             processMypyWarnings = { messages -> messages.forEach { println(it) } },
             processCoverageInfo = { coverageReport ->
-                val output = coverageOutput ?: return@processTestGeneration
-                writeToFileAndSave(output, coverageReport)
+                coverageOutput?.let { output ->
+                    writeToFileAndSave(output, coverageReport)
+                }
             }
         ) {
             logger.info("Finished test generation for the following functions: ${it.joinToString()}")
         }
+        processor.processTestGeneration()
     }
 }
