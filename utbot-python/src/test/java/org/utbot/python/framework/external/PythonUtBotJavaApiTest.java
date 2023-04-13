@@ -9,6 +9,8 @@ import org.utbot.python.utils.Cleaner;
 import org.utbot.python.utils.TemporaryFileManager;
 
 import java.io.File;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,15 +27,25 @@ public class PythonUtBotJavaApiTest {
         Cleaner.INSTANCE.doCleaning();
     }
 
+    private File loadExampleCode(String name) {
+        URL resource = getClass().getClassLoader().getResource(name);
+        if (resource == null) {
+            throw new IllegalArgumentException("file not found!");
+        } else {
+            try {
+                return new File(resource.toURI());
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     @Test
     public void testSimpleFunction() {
-        String code = "def f(x: int, y: int):\n    return x + y";
-        File fileWithCode = TemporaryFileManager.INSTANCE.createTemporaryFile(code, "simple_function.py", null, false);
+        File fileWithCode = loadExampleCode("example_code/arithmetic.py");
         String pythonRunRoot = fileWithCode.getParentFile().getAbsolutePath();
         String moduleFilename = fileWithCode.getAbsolutePath();
-        String moduleName = "simple_function";
-        String methodName = "f";
-        PythonObjectName testMethodName = new PythonObjectName(moduleName, methodName);
+        PythonObjectName testMethodName = new PythonObjectName("arithmetic", "calculate_function_value");
         PythonTestMethodInfo methodInfo = new PythonTestMethodInfo(testMethodName, moduleFilename, null);
         ArrayList<PythonTestMethodInfo> testMethods = new ArrayList<>(1);
         testMethods.add(methodInfo);
@@ -52,13 +64,10 @@ public class PythonUtBotJavaApiTest {
 
     @Test
     public void testSimpleFunctionTestCase() {
-        String code = "def f(x: int, y: int):\n    return x + y";
-        File fileWithCode = TemporaryFileManager.INSTANCE.createTemporaryFile(code, "simple_function.py", null, false);
+        File fileWithCode = loadExampleCode("example_code/arithmetic.py");
         String pythonRunRoot = fileWithCode.getParentFile().getAbsolutePath();
         String moduleFilename = fileWithCode.getAbsolutePath();
-        String moduleName = "simple_function";
-        String methodName = "f";
-        PythonObjectName testMethodName = new PythonObjectName(moduleName, methodName);
+        PythonObjectName testMethodName = new PythonObjectName("arithmetic", "calculate_function_value");
         PythonTestMethodInfo methodInfo = new PythonTestMethodInfo(testMethodName, moduleFilename, null);
         ArrayList<PythonTestMethodInfo> testMethods = new ArrayList<>(1);
         testMethods.add(methodInfo);
