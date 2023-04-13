@@ -242,7 +242,9 @@ class PythonTestGenerationProcessor(
             methodIds[testSet.method]?.rootModuleName?.let { PythonUserImport(importName_ = it) }
         }
         val sysImport = PythonSystemImport("sys")
-        val sysPathImports = relativizePaths(pythonRunRoot, directoriesForSysPath).map { PythonSysPathImport(it) }
+        val sysPathImports = relativizePaths(pythonRunRoot, directoriesForSysPath)
+            .map { PythonSysPathImport(it) }
+            .filterNot { it.sysPath.isEmpty() }
 
         val testFrameworkModule =
             testFramework.testSuperClass?.let { PythonUserImport(importName_ = (it as PythonClassId).rootModuleName) }

@@ -4,5 +4,4 @@ class PythonTestMethodInfo(
     val methodName: PythonObjectName,
     val moduleFilename: String,
     val containingClassName: PythonObjectName? = null
-) {
-}
+)

@@ -9,8 +9,6 @@ import org.utbot.python.utils.TemporaryFileManager;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 
 public class PythonUtBotJavaApiTest {
 
@@ -36,10 +34,10 @@ public class PythonUtBotJavaApiTest {
         PythonTestMethodInfo methodInfo = new PythonTestMethodInfo(testMethodName, moduleFilename, null);
         ArrayList<PythonTestMethodInfo> testMethods = new ArrayList<>(1);
         testMethods.add(methodInfo);
-        Set<String> directoriesForSysPath = new HashSet<>();
+        ArrayList<String> directoriesForSysPath = new ArrayList<>();
         directoriesForSysPath.add(pythonRunRoot);
         String pythonPath = "C:\\Users\\tWX1238545\\IdeaProjects\\UTBotJava\\utbot-python\\samples\\venv\\Scripts\\python.exe";
-        String testCode = PythonUtBotJavaApi.generateUnitTestsCode(
+        String testCode = PythonUtBotJavaApi.generate(
                 testMethods,
                 pythonPath,
                 pythonRunRoot,
