@@ -28,7 +28,7 @@ public class PythonUtBotJavaApiTest {
     public void tearDown() {
         Cleaner.INSTANCE.doCleaning();
     }
-    private File loadExampleCode(String name) {
+    private File loadResource(String name) {
         URL resource = getClass().getClassLoader().getResource(name);
         if (resource == null) {
             throw new IllegalArgumentException("file not found!");
@@ -43,7 +43,7 @@ public class PythonUtBotJavaApiTest {
 
     @Test
     public void testSimpleFunction() {
-        File fileWithCode = loadExampleCode("example_code/arithmetic.py");
+        File fileWithCode = loadResource("example_code/arithmetic.py");
         String pythonRunRoot = fileWithCode.getParentFile().getAbsolutePath();
         String moduleFilename = fileWithCode.getAbsolutePath();
         PythonObjectName testMethodName = new PythonObjectName("arithmetic", "calculate_function_value");
@@ -66,7 +66,7 @@ public class PythonUtBotJavaApiTest {
 
     @Test
     public void testSimpleFunctionTestCase() {
-        File fileWithCode = loadExampleCode("example_code/arithmetic.py");
+        File fileWithCode = loadResource("example_code/arithmetic.py");
         String pythonRunRoot = fileWithCode.getParentFile().getAbsolutePath();
         String moduleFilename = fileWithCode.getAbsolutePath();
         PythonObjectName testMethodName = new PythonObjectName("arithmetic", "calculate_function_value");
@@ -85,5 +85,30 @@ public class PythonUtBotJavaApiTest {
         );
         Assertions.assertTrue(testCase.size() > 0);
         Assertions.assertTrue(testCase.get(0).component2().size() > 0);
+    }
+
+    @Test
+    public void testSimpleClassMethod() {
+        File fileWithCode = loadResource("example_code/inner_dir/inner_module.py");
+        File projectRoot = loadResource("example_code/");
+        String pythonRunRoot = projectRoot.getAbsolutePath();
+        String moduleFilename = fileWithCode.getAbsolutePath();
+        PythonObjectName containingClassName = new PythonObjectName("inner_dir.inner_module", "InnerClass");
+        PythonObjectName testMethodName = new PythonObjectName("inner_dir.inner_module", "f");
+        PythonTestMethodInfo methodInfo = new PythonTestMethodInfo(testMethodName, moduleFilename, containingClassName);
+        ArrayList<PythonTestMethodInfo> testMethods = new ArrayList<>(1);
+        testMethods.add(methodInfo);
+        ArrayList<String> directoriesForSysPath = new ArrayList<>();
+        directoriesForSysPath.add(pythonRunRoot);
+        String testCode = PythonUtBotJavaApi.generate(
+                testMethods,
+                pythonPath,
+                pythonRunRoot,
+                directoriesForSysPath,
+                10_000,
+                1_000,
+                Unittest.INSTANCE
+        );
+        Assertions.assertTrue(testCode.length() > 0);
     }
 }
