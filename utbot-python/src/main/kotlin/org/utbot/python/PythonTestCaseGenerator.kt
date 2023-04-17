@@ -275,7 +275,8 @@ class PythonTestCaseGenerator(
             else
                 executions,
             errors,
-            storageForMypyMessages
+            storageForMypyMessages,
+            method.containingPythonClassId
         )
     }
 

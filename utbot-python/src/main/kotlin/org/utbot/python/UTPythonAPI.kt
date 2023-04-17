@@ -50,6 +50,8 @@ class PythonMethod(
 
     val argumentsNames: List<String>
         get() = arguments.map { it.name }.drop(if (hasThisArgument) 1 else 0)
+
+    val containingPythonClassId = containingPythonClass?.let {PythonClassId(it.pythonTypeName())}
 }
 
 data class PythonTestSet(

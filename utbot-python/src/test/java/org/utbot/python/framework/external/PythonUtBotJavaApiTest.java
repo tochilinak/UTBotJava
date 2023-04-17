@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.utbot.python.PythonTestSet;
+import org.utbot.python.framework.codegen.model.Unittest;
 import org.utbot.python.utils.Cleaner;
 import org.utbot.python.utils.TemporaryFileManager;
 
@@ -19,6 +20,7 @@ public class PythonUtBotJavaApiTest {
 
     @BeforeEach
     public void setUp() {
+        TemporaryFileManager.INSTANCE.initialize();
         Cleaner.INSTANCE.restart();
     }
 
@@ -26,7 +28,6 @@ public class PythonUtBotJavaApiTest {
     public void tearDown() {
         Cleaner.INSTANCE.doCleaning();
     }
-
     private File loadExampleCode(String name) {
         URL resource = getClass().getClassLoader().getResource(name);
         if (resource == null) {
@@ -57,7 +58,8 @@ public class PythonUtBotJavaApiTest {
                 pythonRunRoot,
                 directoriesForSysPath,
                 10_000,
-                1_000
+                1_000,
+                Unittest.INSTANCE
         );
         Assertions.assertTrue(testCode.length() > 0);
     }

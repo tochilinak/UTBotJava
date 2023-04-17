@@ -12,6 +12,7 @@ import org.utbot.python.newtyping.pythonTypeRepresentation
 import org.utbot.python.utils.Fail
 import org.utbot.python.utils.RequirementsUtils.requirements
 import org.utbot.python.utils.Success
+import org.utbot.python.utils.findCurrentPythonModule
 
 private val logger = KotlinLogging.logger {}
 
