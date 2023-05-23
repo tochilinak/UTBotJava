@@ -26,6 +26,7 @@ import org.utbot.python.typing.MypyAnnotations
 import org.utbot.python.utils.ExecutionWithTimeoutMode
 import org.utbot.python.utils.TestGenerationLimitManager
 import org.utbot.python.utils.PriorityCartesianProduct
+import org.utbot.python.utils.StatisticCollector
 import org.utbot.python.utils.TimeoutMode
 import java.io.File
 
@@ -134,6 +135,7 @@ class PythonTestCaseGenerator(
             ExecutionWithTimeoutMode,
             until,
         )
+        StatisticCollector.clear()
         var missingLines = initMissingLines
 
         val (hintCollector, constantCollector) = constructCollectors(mypyStorage, typeStorage, method)

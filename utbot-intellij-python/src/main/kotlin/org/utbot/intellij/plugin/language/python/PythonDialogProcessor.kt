@@ -44,7 +44,9 @@ import org.utbot.python.framework.api.python.PythonClassId
 import org.utbot.python.framework.codegen.PythonCgLanguageAssistant
 import org.utbot.python.utils.RequirementsUtils.installRequirements
 import org.utbot.python.utils.RequirementsUtils.requirements
+import org.utbot.python.utils.StatisticCollector
 import org.utbot.python.utils.camelToSnakeCase
+import org.utbot.python.utils.timeToSecond
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.Path
@@ -254,6 +256,7 @@ object PythonDialogProcessor {
                         )
                     }
                 } finally {
+                    println("Result coverage: ${StatisticCollector.getCoveragePoints(timeToSecond(baseModel.timeout))}")
                     LockFile.unlock()
                 }
             }

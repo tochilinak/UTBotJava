@@ -30,7 +30,9 @@ import org.utbot.python.newtyping.mypy.setConfigFile
 import org.utbot.python.typing.MypyAnnotations
 import org.utbot.python.utils.Cleaner
 import org.utbot.python.utils.RequirementsUtils.requirementsAreInstalled
+import org.utbot.python.utils.StatisticCollector
 import org.utbot.python.utils.getLineOfFunction
+import org.utbot.python.utils.timeToSecond
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
@@ -108,10 +110,14 @@ object PythonTestGenerationProcessor {
             )
 
             val until = startTime + timeout
+            StatisticCollector.timeShift = timeToSecond(startTime)
             val tests = pythonMethods.mapIndexed { index, methodHeader ->
                 val methodsLeft = pythonMethods.size - index
-                val localUntil = (until - System.currentTimeMillis()) / methodsLeft + System.currentTimeMillis()
+                val currentTimeMillis = System.currentTimeMillis()
+                val localUntil = (until - currentTimeMillis) / methodsLeft + currentTimeMillis
                 val method = findMethodByHeader(mypyStorage, methodHeader, currentPythonModule, pythonFileContent)
+
+//                StatisticCollector.timeShift = timeToSecond(currentTimeMillis)
                 testCaseGenerator.generate(method, localUntil)
             }
 

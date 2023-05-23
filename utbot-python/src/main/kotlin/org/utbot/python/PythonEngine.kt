@@ -22,7 +22,9 @@ import org.utbot.python.newtyping.PythonTypeStorage
 import org.utbot.python.newtyping.general.Type
 import org.utbot.python.newtyping.pythonModules
 import org.utbot.python.newtyping.pythonTypeRepresentation
+import org.utbot.python.utils.StatisticCollector
 import org.utbot.python.utils.camelToSnakeCase
+import org.utbot.python.utils.now
 import org.utbot.summary.fuzzer.names.TestSuggestedInfo
 import java.net.ServerSocket
 
@@ -256,6 +258,13 @@ class PythonEngine(
 
                         is PythonEvaluationSuccess -> {
                             val coveredInstructions = evaluationResult.coverage.coveredInstructions
+                            val missedInstructions = evaluationResult.coverage.missedInstructions
+                            StatisticCollector.addStatistic(
+                                now(),
+                                methodUnderTest,
+                                coveredInstructions.map { it.lineNumber }.toSet(),
+                                coveredInstructions.map { it.lineNumber }.toSet() + missedInstructions.map { it.lineNumber }.toSet()
+                                )
 
                             when (val result = handleSuccessResult(
                                 arguments,

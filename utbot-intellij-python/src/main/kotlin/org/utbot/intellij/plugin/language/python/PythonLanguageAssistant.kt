@@ -44,7 +44,7 @@ object PythonLanguageAssistant : LanguageAssistant() {
         PythonDialogProcessor.createDialogAndGenerateTests(
             project,
             targets.pyClasses + targets.pyFunctions,
-            targets.focusedClass ?: targets.focusedFunction,
+            targets.focusedFunction ?: targets.focusedClass,
             targets.editor,
         )
     }
