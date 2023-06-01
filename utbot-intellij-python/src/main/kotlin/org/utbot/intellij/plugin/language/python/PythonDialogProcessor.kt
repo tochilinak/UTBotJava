@@ -42,8 +42,8 @@ import org.utbot.python.PythonTestGenerationProcessor
 import org.utbot.python.PythonTestGenerationProcessor.processTestGeneration
 import org.utbot.python.framework.api.python.PythonClassId
 import org.utbot.python.framework.codegen.PythonCgLanguageAssistant
+import org.utbot.python.utils.RequirementsUtils.allRequirements
 import org.utbot.python.utils.RequirementsUtils.installRequirements
-import org.utbot.python.utils.RequirementsUtils.requirements
 import org.utbot.python.utils.camelToSnakeCase
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -203,7 +203,7 @@ object PythonDialogProcessor {
                 try {
                     groupPyElementsByModule(baseModel).forEach { model ->
                         val methods = findSelectedPythonMethods(model)
-                        val requirementsList = requirements.toMutableList()
+                        val requirementsList = allRequirements.toMutableList()
                         if (!model.testFramework.isInstalled) {
                             requirementsList += model.testFramework.mainPackage
                         }

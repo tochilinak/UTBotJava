@@ -18,6 +18,7 @@ import org.utbot.python.framework.codegen.model.Unittest
 import org.utbot.python.newtyping.ast.parseClassDefinition
 import org.utbot.python.newtyping.ast.parseFunctionDefinition
 import org.utbot.python.utils.*
+import org.utbot.python.utils.RequirementsUtils.allRequirements
 import org.utbot.python.utils.RequirementsUtils.installRequirements
 import org.utbot.python.utils.RequirementsUtils.requirements
 import java.io.File
@@ -202,10 +203,9 @@ class PythonGenerateTestsCommand : CliktCommand(
     private fun processMissingRequirements(): PythonTestGenerationProcessor.MissingRequirementsActionResult {
         if (installRequirementsIfMissing) {
             logger.info("Installing requirements...")
-            val result = installRequirements(pythonPath)
+            val result = installRequirements(pythonPath, allRequirements)
             if (result.exitValue == 0)
                 return PythonTestGenerationProcessor.MissingRequirementsActionResult.INSTALLED
-            System.err.println(result.stderr)
             logger.error("Failed to install requirements.")
         } else {
             logger.error("Missing some requirements. Please add --install-requirements flag or install them manually.")

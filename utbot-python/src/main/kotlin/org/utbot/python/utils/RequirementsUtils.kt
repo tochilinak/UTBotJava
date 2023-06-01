@@ -1,11 +1,20 @@
 package org.utbot.python.utils
 
+import org.utbot.common.asPathToFile
+import java.io.IOException
+import java.nio.file.Paths
+
 object RequirementsUtils {
     val requirements: List<String> = listOf(
         "mypy==1.0.0",
-        "utbot-executor==1.4.26",
+//        "utbot-executor==1.4.26",
         "utbot-mypy-runner==0.2.8",
     )
+    private val utbotExecutorPath =
+        RequirementsUtils::class.java.getResource("/utbot-python-modules/utbot-executor")
+            ?: error("Didn't find utbot-executor")
+
+    val allRequirements: List<String> = requirements + getPathsToLocalModules()
 
     private val requirementsScriptContent: String =
         RequirementsUtils::class.java.getResource("/check_requirements.py")
@@ -42,5 +51,9 @@ object RequirementsUtils {
                 "install"
             ) + moduleNames
         )
+    }
+
+    private fun getPathsToLocalModules(): List<String> {
+        return listOf(Paths.get(utbotExecutorPath.toURI()).toFile().absolutePath)
     }
 }

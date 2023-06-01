@@ -1,6 +1,6 @@
 from __future__ import annotations
 from itertools import product
-from typing import List
+from typing import List, Tuple
 
 
 class MatrixException(Exception):
