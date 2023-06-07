@@ -1,0 +1,52 @@
+def pythonPath = './venv/Scripts/python.exe'
+def resourcesPath = './src/main/resources'
+def version = "0.0.1"
+
+tasks.register("cleanPrevious", Delete) {
+    delete fileTree(dir: resourcesPath, include: 'utbot_executor.tar.gz')
+}
+
+tasks.register('preparePython', Exec) {
+    dependsOn cleanPrevious
+    workingDir '.'
+    commandLine pythonPath, '-m', 'pip', 'install', '--upgrade', 'build'
+}
+
+tasks.register('buildPythonExecutor', Exec) {
+    dependsOn preparePython
+    workingDir '.'
+    commandLine pythonPath, '-m', 'build', './utbot_executor', '-o', resourcesPath
+}
+
+tasks.register("renamePackage", Copy) {
+    dependsOn buildPythonExecutor
+    from resourcesPath
+    into resourcesPath
+
+    rename '(utbot_executor)-.*(.tar.gz)', '$1$2'
+}
+
+tasks.register("removeWhl", Delete) {
+    dependsOn renamePackage
+    delete fileTree(dir: resourcesPath, include: '**.whl')
+}
+
+tasks.register("removeNewBuild", Delete) {
+    dependsOn removeWhl
+    delete fileTree(dir: resourcesPath, include: 'utbot_executor-**.tar.gz')
+}
+
+tasks.register('preBuild') {
+//    dependsOn cleanPrevious
+//    dependsOn preparePython
+//    dependsOn buildPythonExecutor
+//    dependsOn renamePackage
+    dependsOn removeNewBuild
+}
+
+tasks.build.dependsOn {
+    if (!pythonPath.isEmpty()) {
+        preBuild
+    }
+}
+//tasks.build.dependsOn('preBuild')

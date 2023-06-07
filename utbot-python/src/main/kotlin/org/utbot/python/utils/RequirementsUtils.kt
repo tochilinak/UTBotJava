@@ -1,8 +1,9 @@
 package org.utbot.python.utils
 
-import org.utbot.common.asPathToFile
-import java.io.IOException
-import java.nio.file.Paths
+import org.utbot.python.evaluation.UtbotExecutorLoader
+import java.io.File
+import java.net.URL
+
 
 object RequirementsUtils {
     val requirements: List<String> = listOf(
@@ -10,11 +11,14 @@ object RequirementsUtils {
 //        "utbot-executor==1.4.26",
         "utbot-mypy-runner==0.2.8",
     )
-    private val utbotExecutorPath =
-        RequirementsUtils::class.java.getResource("/utbot-python-modules/utbot-executor")
-            ?: error("Didn't find utbot-executor")
+    private val utbotExecutorVersion = "utbot-executor==${UtbotExecutorLoader.version}"
+    private val utbotExecutorCode = UtbotExecutorLoader.packageCode
 
-    val allRequirements: List<String> = requirements + getPathsToLocalModules()
+    val packageRequirements: List<String> = listOf(
+        utbotExecutorVersion
+    )
+
+    val allRequirements: List<String> = requirements + utbotExecutorVersion
 
     private val requirementsScriptContent: String =
         RequirementsUtils::class.java.getResource("/check_requirements.py")
@@ -22,7 +26,7 @@ object RequirementsUtils {
             ?: error("Didn't find /check_requirements.py")
 
     fun requirementsAreInstalled(pythonPath: String): Boolean {
-        return requirementsAreInstalled(pythonPath, requirements)
+        return requirementsAreInstalled(pythonPath, allRequirements)
     }
 
     fun requirementsAreInstalled(pythonPath: String, requirementList: List<String>): Boolean {
@@ -53,7 +57,24 @@ object RequirementsUtils {
         )
     }
 
-    private fun getPathsToLocalModules(): List<String> {
-        return listOf(Paths.get(utbotExecutorPath.toURI()).toFile().absolutePath)
+    fun installPackages(pythonPath: String): CmdResult {
+        return installPackages(pythonPath, listOf(utbotExecutorCode))
+    }
+
+    private fun installPackages(pythonPath: String, codeUrls: List<URL>): CmdResult {
+        val packageFiles = emptyList<String>().toMutableList()
+        codeUrls.forEach { codeURL ->
+            val code = codeURL.readBytes()
+            val packageFile = TemporaryFileManager.createTemporaryFile(code, tag = ".tar.gz")
+            packageFiles.add(packageFile.absolutePath)
+        }
+
+        return installRequirements(pythonPath, packageFiles)
+    }
+
+    private fun installPackage(pythonPath: String, codeURL: URL): CmdResult {
+        val code = codeURL.readBytes()
+        val packageFile = TemporaryFileManager.createTemporaryFile(code)
+        return installRequirements(pythonPath, listOf(packageFile.absolutePath))
     }
 }

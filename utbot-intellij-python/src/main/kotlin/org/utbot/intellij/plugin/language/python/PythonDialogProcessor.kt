@@ -42,7 +42,7 @@ import org.utbot.python.PythonTestGenerationProcessor
 import org.utbot.python.PythonTestGenerationProcessor.processTestGeneration
 import org.utbot.python.framework.api.python.PythonClassId
 import org.utbot.python.framework.codegen.PythonCgLanguageAssistant
-import org.utbot.python.utils.RequirementsUtils.allRequirements
+import org.utbot.python.utils.RequirementsUtils
 import org.utbot.python.utils.RequirementsUtils.installRequirements
 import org.utbot.python.utils.camelToSnakeCase
 import java.nio.file.Path
@@ -203,7 +203,7 @@ object PythonDialogProcessor {
                 try {
                     groupPyElementsByModule(baseModel).forEach { model ->
                         val methods = findSelectedPythonMethods(model)
-                        val requirementsList = allRequirements.toMutableList()
+                        val requirementsList = RequirementsUtils.requirements.toMutableList()
                         if (!model.testFramework.isInstalled) {
                             requirementsList += model.testFramework.mainPackage
                         }
@@ -294,6 +294,7 @@ object PythonDialogProcessor {
     }
 
     private fun askAndInstallRequirementsLater(project: Project, pythonPath: String, requirementsList: List<String>) {
+        val requirements = requirementsList + RequirementsUtils.packageRequirements
         val message = """
             Some requirements are not installed.
             Requirements: <br>
@@ -315,9 +316,10 @@ object PythonDialogProcessor {
 
             ProgressManager.getInstance().run(object : Backgroundable(project, "Installing requirements") {
                 override fun run(indicator: ProgressIndicator) {
+                    RequirementsUtils.installPackages(pythonPath)
                     val installResult = installRequirements(pythonPath, requirementsList)
 
-                    if (installResult.exitValue != 0) {
+                 if (installResult.exitValue != 0) {
                         showErrorDialogLater(
                             project,
                             "Requirements installing failed.<br>" +

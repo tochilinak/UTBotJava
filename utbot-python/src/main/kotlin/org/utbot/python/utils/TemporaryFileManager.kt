@@ -29,8 +29,25 @@ object TemporaryFileManager {
         file.createNewFile()
     }
 
+    fun writeToAssignedFile(file: File, content: ByteArray) {
+        file.writeBytes(content)
+        file.parentFile?.mkdirs()
+        file.createNewFile()
+    }
+
     fun createTemporaryFile(
         content: String,
+        fileName: String? = null,
+        tag: String? = null,
+        addToCleaner: Boolean = true
+    ): File {
+        val file = assignTemporaryFile(fileName, tag, addToCleaner)
+        writeToAssignedFile(file, content)
+        return file
+    }
+
+    fun createTemporaryFile(
+        content: ByteArray,
         fileName: String? = null,
         tag: String? = null,
         addToCleaner: Boolean = true

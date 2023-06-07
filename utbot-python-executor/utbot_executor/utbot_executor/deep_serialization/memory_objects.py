@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-import copyreg
-import logging
-import traceback
 from itertools import zip_longest
 import pickle
 from typing import Any, Callable, Dict, List, Optional, Set, Type, Final, Iterable
 
-from utbot_executor.deep_serialization.numpy_serialization import is_numpy_ndarray
-from utbot_executor.deep_serialization.utils import PythonId, get_kind, has_reduce, check_comparability, get_repr, \
+from utbot_executor.utbot_executor.deep_serialization.numpy_serialization import is_numpy_ndarray
+from utbot_executor.utbot_executor.deep_serialization.utils import PythonId, get_kind, has_reduce, check_comparability, get_repr, \
     has_repr, TypeInfo, get_constructor_kind
 
 PICKLE_PROTO: Final = 4

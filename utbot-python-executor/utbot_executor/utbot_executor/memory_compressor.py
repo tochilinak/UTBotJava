@@ -1,7 +1,7 @@
 import typing
 
-from utbot_executor.deep_serialization.memory_objects import MemoryDump
-from utbot_executor.deep_serialization.utils import PythonId
+from utbot_executor.utbot_executor.deep_serialization.memory_objects import MemoryDump
+from utbot_executor.utbot_executor.deep_serialization.utils import PythonId
 
 
 def comparator(left: object, right: object) -> bool:

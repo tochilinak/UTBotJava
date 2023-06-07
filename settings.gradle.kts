@@ -52,6 +52,7 @@ if (includeRiderInBuild.toBoolean()) {
 include("utbot-ui-commons")
 
 if (pythonIde.split(",").contains(ideType)) {
+    include("utbot-python-executor")
     include("utbot-python")
     include("utbot-cli-python")
     include("utbot-intellij-python")
