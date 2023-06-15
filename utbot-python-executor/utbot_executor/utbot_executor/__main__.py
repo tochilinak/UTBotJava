@@ -1,7 +1,7 @@
 import argparse
 import logging
 
-from utbot_executor.utbot_executor.listener import PythonExecuteServer
+from utbot_executor.listener import PythonExecuteServer
 
 
 def main(hostname: str, port: int):

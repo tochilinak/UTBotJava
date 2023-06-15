@@ -9,14 +9,14 @@ import trace
 import traceback
 from typing import Any, Callable, Dict, Iterable, List, Tuple
 
-from utbot_executor.utbot_executor.deep_serialization.deep_serialization import serialize_memory_dump, \
+from utbot_executor.deep_serialization.deep_serialization import serialize_memory_dump, \
     serialize_objects_dump
-from utbot_executor.utbot_executor.deep_serialization.json_converter import DumpLoader, deserialize_memory_objects
-from utbot_executor.utbot_executor.deep_serialization.memory_objects import MemoryDump, PythonSerializer
-from utbot_executor.utbot_executor.deep_serialization.utils import PythonId, getattr_by_path
-from utbot_executor.utbot_executor.memory_compressor import compress_memory
-from utbot_executor.utbot_executor.parser import ExecutionRequest, ExecutionResponse, ExecutionFailResponse, ExecutionSuccessResponse
-from utbot_executor.utbot_executor.utils import suppress_stdout as __suppress_stdout
+from utbot_executor.deep_serialization.json_converter import DumpLoader, deserialize_memory_objects
+from utbot_executor.deep_serialization.memory_objects import MemoryDump, PythonSerializer
+from utbot_executor.deep_serialization.utils import PythonId, getattr_by_path
+from utbot_executor.memory_compressor import compress_memory
+from utbot_executor.parser import ExecutionRequest, ExecutionResponse, ExecutionFailResponse, ExecutionSuccessResponse
+from utbot_executor.utils import suppress_stdout as __suppress_stdout
 
 __all__ = ['PythonExecutor']
 

@@ -3,7 +3,7 @@ import importlib
 import json
 import sys
 from typing import Dict, Iterable, Union
-from utbot_executor.utbot_executor.deep_serialization.memory_objects import (
+from utbot_executor.deep_serialization.memory_objects import (
     MemoryObject,
     ReprMemoryObject,
     ListMemoryObject,

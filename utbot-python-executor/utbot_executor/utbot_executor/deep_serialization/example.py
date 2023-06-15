@@ -2,9 +2,9 @@ import datetime
 import json
 from pprint import pprint
 
-from utbot_executor.utbot_executor.deep_serialization.memory_objects import PythonSerializer
-from utbot_executor.utbot_executor.deep_serialization.json_converter import MemoryDumpEncoder
-from utbot_executor.utbot_executor.deep_serialization.deep_serialization import deserialize_objects
+from utbot_executor.deep_serialization.memory_objects import PythonSerializer
+from utbot_executor.deep_serialization.json_converter import MemoryDumpEncoder
+from utbot_executor.deep_serialization.deep_serialization import deserialize_objects
 
 
 class B:

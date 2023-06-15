@@ -1,9 +1,9 @@
 import json
 from typing import Any, Dict, Tuple, List
 
-from utbot_executor.utbot_executor.deep_serialization.memory_objects import PythonSerializer, MemoryDump
-from utbot_executor.utbot_executor.deep_serialization.json_converter import MemoryDumpEncoder, deserialize_memory_objects, DumpLoader
-from utbot_executor.utbot_executor.deep_serialization.utils import PythonId
+from utbot_executor.deep_serialization.memory_objects import PythonSerializer, MemoryDump
+from utbot_executor.deep_serialization.json_converter import MemoryDumpEncoder, deserialize_memory_objects, DumpLoader
+from utbot_executor.deep_serialization.utils import PythonId
 
 
 def serialize_memory_dump(dump: MemoryDump):

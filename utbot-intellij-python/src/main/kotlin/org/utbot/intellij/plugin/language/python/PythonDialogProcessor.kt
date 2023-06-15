@@ -298,7 +298,7 @@ object PythonDialogProcessor {
         val message = """
             Some requirements are not installed.
             Requirements: <br>
-            ${requirementsList.joinToString("<br>")}
+            ${requirements.joinToString("<br>")}
             <br>
             Install them?
         """.trimIndent()

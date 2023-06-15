@@ -3,9 +3,9 @@ import os
 import socket
 import traceback
 
-from utbot_executor.utbot_executor.deep_serialization.memory_objects import PythonSerializer
-from utbot_executor.utbot_executor.parser import parse_request, serialize_response, ExecutionFailResponse
-from utbot_executor.utbot_executor.executor import PythonExecutor
+from utbot_executor.deep_serialization.memory_objects import PythonSerializer
+from utbot_executor.parser import parse_request, serialize_response, ExecutionFailResponse
+from utbot_executor.executor import PythonExecutor
 
 
 RECV_SIZE = 2048
