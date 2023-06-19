@@ -3,8 +3,8 @@ package org.utbot.python.utils
 object RequirementsUtils {
     val requirements: List<String> = listOf(
         "mypy==1.0.0",
-        "utbot-executor==1.4.27",
-        "utbot-mypy-runner==0.2.12",
+        "utbot-executor==1.4.26",
+        "utbot-mypy-runner==0.2.8",
     )
 
     private val requirementsScriptContent: String =

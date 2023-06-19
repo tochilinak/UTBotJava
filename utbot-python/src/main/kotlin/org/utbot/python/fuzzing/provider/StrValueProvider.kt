@@ -11,11 +11,11 @@ import org.utbot.python.fuzzing.PythonFuzzedConcreteValue
 import org.utbot.python.fuzzing.PythonFuzzedValue
 import org.utbot.python.fuzzing.PythonMethodDescription
 import org.utbot.python.fuzzing.provider.utils.generateSummary
+import org.utbot.python.fuzzing.provider.utils.isPattern
 import org.utbot.python.fuzzing.provider.utils.transformQuotationMarks
+import org.utbot.python.fuzzing.provider.utils.transformRawString
 import org.utbot.python.newtyping.general.Type
 import org.utbot.python.newtyping.pythonTypeName
-import java.util.regex.Pattern
-import java.util.regex.PatternSyntaxException
 import kotlin.random.Random
 
 object StrValueProvider : ValueProvider<Type, PythonFuzzedValue, PythonMethodDescription> {
@@ -23,39 +23,31 @@ object StrValueProvider : ValueProvider<Type, PythonFuzzedValue, PythonMethodDes
         return type.pythonTypeName() == pythonStrClassId.canonicalName
     }
 
-    private fun getStrConstants(concreteValues: Collection<PythonFuzzedConcreteValue>): List<StringValue> {
+    private fun getStrConstants(concreteValues: Collection<PythonFuzzedConcreteValue>): List<String> {
         return concreteValues
             .filter { accept(it.type) }
             .map {
                 val value = it.value as String
-                if (Pattern.matches("r\".*\"", value) || Pattern.matches("r'.*'", value)) {
-                    value.drop(2).dropLast(1)
-                } else {
-                    value
-                }
+                value.transformRawString()
             }
             .map {
-                StringValue(it.transformQuotationMarks())
+                it.transformQuotationMarks()
             }
     }
 
     override fun generate(description: PythonMethodDescription, type: Type) = sequence {
         val strConstants = getStrConstants(description.concreteValues) + listOf(
-            StringValue("pythön"),
-            StringValue("abcdefghijklmnopqrst"),
-            StringValue("foo"),
-            StringValue("€"),
+            "pythön",
+            "foo",
+            "\t\n\r",
         )
-        strConstants.forEach { yieldStrings(it) { value } }
+        strConstants.forEach { yieldStrings(StringValue(it)) { value } }
+
         strConstants
-            .map { it.value }
             .filter {
-                try {
-                    Pattern.compile(it); true
-                } catch (_: PatternSyntaxException) {
-                    false
-                }
-            }.forEach {
+                it.isPattern()
+            }
+            .forEach {
                 yieldStrings(RegexValue(it, Random(0)), StringValue::value)
             }
     }
