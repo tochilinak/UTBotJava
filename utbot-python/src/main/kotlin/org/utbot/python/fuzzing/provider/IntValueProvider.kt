@@ -24,7 +24,7 @@ object IntValueProvider : ValueProvider<Type, PythonFuzzedValue, PythonMethodDes
     private val configurationStubWithNoUsage = Configuration()
 
     override fun accept(type: Type): Boolean {
-        return type.pythonTypeName() == pythonIntClassId.canonicalName || type.isAny()
+        return type.pythonTypeName() == pythonIntClassId.canonicalName
     }
 
     private fun BitVectorValue.change(func: BitVectorValue.() -> Unit): BitVectorValue {

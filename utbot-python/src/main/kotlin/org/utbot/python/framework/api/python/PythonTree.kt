@@ -1,5 +1,6 @@
 package org.utbot.python.framework.api.python
 
+import org.utbot.python.framework.api.python.util.pythonAnyClassId
 import org.utbot.python.framework.api.python.util.pythonBoolClassId
 import org.utbot.python.framework.api.python.util.pythonDictClassId
 import org.utbot.python.framework.api.python.util.pythonFloatClassId

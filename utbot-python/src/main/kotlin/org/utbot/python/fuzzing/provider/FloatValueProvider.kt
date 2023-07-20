@@ -18,7 +18,7 @@ import java.math.BigInteger
 
 object FloatValueProvider : ValueProvider<Type, PythonFuzzedValue, PythonMethodDescription> {
     override fun accept(type: Type): Boolean {
-        return type.pythonTypeName() == pythonFloatClassId.canonicalName || type.isAny()
+        return type.pythonTypeName() == pythonFloatClassId.canonicalName
     }
 
     private fun getFloatConstants(concreteValues: Collection<PythonFuzzedConcreteValue>): List<IEEE754Value> {

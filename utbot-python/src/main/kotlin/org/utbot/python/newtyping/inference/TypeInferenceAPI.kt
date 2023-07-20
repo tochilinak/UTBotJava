@@ -1,11 +1,9 @@
 package org.utbot.python.newtyping.inference
 
-import org.utbot.python.newtyping.ast.visitor.hints.HintCollectorResult
 import org.utbot.python.newtyping.general.Type
 
 abstract class TypeInferenceAlgorithm {
     abstract suspend fun run(
-        hintCollectorResult: HintCollectorResult,
         isCancelled: () -> Boolean,
         annotationHandler: suspend (Type) -> InferredTypeFeedback,
     ): Int

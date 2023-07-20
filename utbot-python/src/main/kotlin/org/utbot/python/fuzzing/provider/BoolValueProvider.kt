@@ -15,7 +15,7 @@ import org.utbot.python.newtyping.pythonTypeName
 
 object BoolValueProvider : ValueProvider<Type, PythonFuzzedValue, PythonMethodDescription>{
     override fun accept(type: Type): Boolean {
-        return type.pythonTypeName() == pythonBoolClassId.canonicalName || type.isAny()
+        return type.pythonTypeName() == pythonBoolClassId.canonicalName
     }
 
     override fun generate(description: PythonMethodDescription, type: Type) = sequence {

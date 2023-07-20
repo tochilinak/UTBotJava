@@ -56,13 +56,13 @@ internal class PytestManager(context: CgContext) : TestFrameworkManager(context)
     override fun disableTestMethod(reason: String) {
         require(testFramework is Pytest) { "According to settings, Pytest was expected, but got: $testFramework" }
 
-        context.importIfNeeded(testFramework.skipDecoratorClassId)
+        context.importIfNeeded(Pytest.skipDecoratorClassId)
         val reasonArgument = CgNamedAnnotationArgument(
             name = "reason",
             value = CgPythonRepr(pythonStrClassId, "'${reason.replace("\"", "'")}'"),
         )
         statementConstructor.addAnnotation(
-            classId = testFramework.skipDecoratorClassId,
+            classId = Pytest.skipDecoratorClassId,
             namedArguments = listOf(reasonArgument),
             target = Method
         )
@@ -145,7 +145,7 @@ internal class UnittestManager(context: CgContext) : TestFrameworkManager(contex
             value = CgPythonRepr(pythonStrClassId, "'${reason.replace("\"", "'")}'"),
         )
         statementConstructor.addAnnotation(
-            classId = testFramework.skipDecoratorClassId,
+            classId = Unittest.skipDecoratorClassId,
             namedArguments = listOf(reasonArgument),
             target = Method,
 

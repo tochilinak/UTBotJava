@@ -12,7 +12,7 @@ import org.utbot.python.newtyping.general.Type
 
 object NoneValueProvider : ValueProvider<Type, PythonFuzzedValue, PythonMethodDescription> {
     override fun accept(type: Type): Boolean {
-        return type.isAny() || type.meta is PythonNoneTypeDescription
+        return type.meta is PythonNoneTypeDescription
     }
 
     override fun generate(description: PythonMethodDescription, type: Type): Sequence<Seed<Type, PythonFuzzedValue>> = sequence {

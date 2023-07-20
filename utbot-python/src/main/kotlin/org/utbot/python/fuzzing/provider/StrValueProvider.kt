@@ -11,6 +11,7 @@ import org.utbot.python.fuzzing.PythonFuzzedConcreteValue
 import org.utbot.python.fuzzing.PythonFuzzedValue
 import org.utbot.python.fuzzing.PythonMethodDescription
 import org.utbot.python.fuzzing.provider.utils.generateSummary
+import org.utbot.python.fuzzing.provider.utils.isAny
 import org.utbot.python.fuzzing.provider.utils.isPattern
 import org.utbot.python.fuzzing.provider.utils.transformQuotationMarks
 import org.utbot.python.fuzzing.provider.utils.transformRawString

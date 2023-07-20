@@ -13,7 +13,7 @@ import org.utbot.python.fuzzing.value.TypesFromJSONStorage
 
 object ConstantValueProvider : ValueProvider<Type, PythonFuzzedValue, PythonMethodDescription> {
     override fun accept(type: Type): Boolean {
-        return TypesFromJSONStorage.getTypesFromJsonStorage().containsKey(type.pythonTypeName()) || type.isAny()
+        return TypesFromJSONStorage.getTypesFromJsonStorage().containsKey(type.pythonTypeName())
     }
 
     override fun generate(description: PythonMethodDescription, type: Type): Sequence<Seed<Type, PythonFuzzedValue>> =

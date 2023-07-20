@@ -8,6 +8,7 @@ import org.utbot.python.framework.api.python.PythonTree
 import org.utbot.python.framework.api.python.util.*
 import org.utbot.python.fuzzing.PythonFuzzedValue
 import org.utbot.python.fuzzing.PythonMethodDescription
+import org.utbot.python.fuzzing.provider.utils.isAny
 import org.utbot.python.fuzzing.provider.utils.isConcreteType
 import org.utbot.python.newtyping.*
 import org.utbot.python.newtyping.general.FunctionType
@@ -31,7 +32,7 @@ object ReduceValueProvider : ValueProvider<Type, PythonFuzzedValue, PythonMethod
     override fun accept(type: Type): Boolean {
         val hasSupportedType =
             !unsupportedTypes.contains(type.pythonTypeName())
-        return hasSupportedType && isConcreteType(type)
+        return hasSupportedType && isConcreteType(type) && !type.isAny()
     }
 
     override fun generate(description: PythonMethodDescription, type: Type) = sequence {
