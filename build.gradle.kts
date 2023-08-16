@@ -181,21 +181,14 @@ dependencies {
 
 configure(
     listOf(
-        project(":utbot-api"),
-        project(":utbot-core"),
-        project(":utbot-framework"),
-        project(":utbot-framework-api"),
-        project(":utbot-java-fuzzing"),
-        project(":utbot-instrumentation"),
-        project(":utbot-rd"),
-        project(":utbot-summary")
+        project(":utbot-python-types"),
     )
 ) {
     publishing {
         repositories {
             maven {
                 name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/UnitTestBot/UTBotJava")
+                url = uri("https://maven.pkg.github.com/tochilinak/UTBotJava")
                 credentials {
                     username = System.getenv("GITHUB_ACTOR")
                     password = System.getenv("GITHUB_TOKEN")
